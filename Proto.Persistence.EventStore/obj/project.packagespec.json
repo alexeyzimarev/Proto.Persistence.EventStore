@@ -1,0 +1,53 @@
+﻿{
+  "version": "0.1.0",
+  "restore": {
+    "projectUniqueName": "/home/alexey/GitHub/Proto.Persistence.EventStore/Proto.Persistence.EventStore/Proto.Persistence.EventStore.csproj",
+    "projectName": "Proto.Persistence.EventStore",
+    "projectPath": "/home/alexey/GitHub/Proto.Persistence.EventStore/Proto.Persistence.EventStore/Proto.Persistence.EventStore.csproj",
+    "outputPath": "/home/alexey/GitHub/Proto.Persistence.EventStore/Proto.Persistence.EventStore/obj/",
+    "projectStyle": "PackageReference",
+    "crossTargeting": true,
+    "originalTargetFrameworks": [
+      "net461",
+      "netstandard1.5"
+    ],
+    "frameworks": {
+      "net461": {
+        "projectReferences": {}
+      },
+      "netstandard1.5": {
+        "projectReferences": {}
+      }
+    }
+  },
+  "frameworks": {
+    "net461": {
+      "dependencies": {
+        "EventStore.Client": {
+          "target": "Package",
+          "version": "4.0.2-rc1"
+        },
+        "Proto.Persistence": {
+          "target": "Package",
+          "version": "0.1.9"
+        }
+      }
+    },
+    "netstandard1.5": {
+      "dependencies": {
+        "NETStandard.Library": {
+          "target": "Package",
+          "version": "1.6.1"
+        },
+        "EventStore.Client": {
+          "target": "Package",
+          "version": "4.0.2-rc1"
+        },
+        "Proto.Persistence": {
+          "target": "Package",
+          "version": "0.1.9"
+        }
+      }
+    }
+  }
+}
