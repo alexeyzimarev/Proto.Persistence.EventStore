@@ -9,39 +9,115 @@ namespace Proto.Persistence.EventStore
 {
     public static class EventStoreConnectionExtensions
     {
-        public static async Task<long> SaveEvents(this IEventStoreConnection connection,
-            string streamIdentifier, IEnumerable<object> events)
-        {
-            var esEvents = events
-                .Select(x =>
-                    new EventData(
-                        Guid.NewGuid(),
-                        x.GetType().GetTypeInfo().Name,
-                        true,
-                        JsonSerialization.Serialise(x),
-                        null));
+        private const int MaxReadSize = 4096;
 
-            var result = await connection.AppendToStreamAsync(streamIdentifier, ExpectedVersion.Any, esEvents);
+        public static async Task<long> SaveEvent(this IEventStoreConnection connection,
+            string streamIdentifier, object @event, long index, long expectedVersion)
+        {
+            var esEvents = new[]
+            {
+                new EventData(
+                    Guid.NewGuid(),
+                    @event.GetType().GetTypeInfo().Name,
+                    true,
+                    JsonSerialization.Serialise(@event),
+                    JsonSerialization.Serialise(
+                        new EventMetadata {CrlTypeName = @event.GetType().FullName, Index = index}))
+            };
+
+            WriteResult result;
+            try
+            {
+                result = await connection
+                    .AppendToStreamAsync(streamIdentifier, expectedVersion, esEvents)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
             return result.NextExpectedVersion;
         }
 
-        public static async Task<IEnumerable<object>> ReadEvents(this IEventStoreConnection connection,
+        public static async Task<(IEnumerable<object> Events, long Version)> ReadEvents(
+            this IEventStoreConnection connection,
             string streamName, long start, long count)
         {
-            var slice = await connection.ReadStreamEventsForwardAsync(streamName, start, count, false);
-            if (slice.Status == SliceReadStatus.StreamDeleted || slice.Status == SliceReadStatus.StreamNotFound)
-                return null;
-            
-            return !slice.Events.Any() ? null : slice.Events.SelectMany(JsonSerialization.Deserialize);
+            var events = new List<object>();
+            ResolvedEvent lastEvent;
+            try
+            {
+                long nextPageStart;
+                long runningCount = 0;
+                do
+                {
+                    var eventsLeft = count - runningCount;
+                    var pageSize = eventsLeft < MaxReadSize ? (int) eventsLeft : MaxReadSize;
+
+                    var slice = await connection
+                        .ReadStreamEventsForwardAsync(streamName, start, pageSize, false)
+                        .ConfigureAwait(false);
+
+                    if (slice.Status == SliceReadStatus.StreamDeleted || slice.Status == SliceReadStatus.StreamNotFound)
+                        return (new List<object>(), -1);
+
+                    runningCount += slice.Events.Length;
+                    nextPageStart = !slice.IsEndOfStream ? slice.NextEventNumber : -1;
+
+                    events.AddRange(slice.Events.Select(Deserialize));
+                    lastEvent = slice.Events.Last();
+                } while (nextPageStart != -1 && runningCount < count);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+            var metadata = JsonSerialization.Deserialize<EventMetadata>(lastEvent.Event.Metadata);
+
+            return (events, metadata.Index);
         }
 
-        public static async Task<object> ReadLastEvent(this IEventStoreConnection connection, string streamName)
+        public static async Task<(object Event, long Version)> ReadLastEvent(this IEventStoreConnection connection,
+            string streamName)
         {
-            var slice = await connection.ReadStreamEventsBackwardAsync(streamName, StreamPosition.End, 1, true);
-            if (slice.Status == SliceReadStatus.StreamDeleted || slice.Status == SliceReadStatus.StreamNotFound)
-                return null;
+            try
+            {
+                var slice = await connection
+                    .ReadStreamEventsBackwardAsync(streamName, StreamPosition.End, 1, true)
+                    .ConfigureAwait(false);
 
-            return !slice.Events.Any() ? null : JsonSerialization.Deserialize(slice.Events.First());
+                if (slice.Status == SliceReadStatus.StreamDeleted || slice.Status == SliceReadStatus.StreamNotFound)
+                    return (null, -1);
+
+                if (!slice.Events.Any()) return (null, 0);
+
+                var @event = Deserialize(slice.Events.First());
+                var meta = JsonSerialization.Deserialize<EventMetadata>(slice.Events.First().Event.Metadata);
+                return (@event, meta.Index);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        private static object Deserialize(ResolvedEvent @event)
+        {
+            var meta = JsonSerialization.Deserialize<EventMetadata>(@event.Event.Metadata);
+            var type = Type.GetType(meta.CrlTypeName);
+            return JsonSerialization.Deserialize(@event.Event.Data, type);
+        }
+
+        internal class EventMetadata
+        {
+            public string CrlTypeName { get; set; }
+            public long Index { get; set; }
         }
     }
 }

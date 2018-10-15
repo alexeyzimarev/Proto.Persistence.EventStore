@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <LangVersion>7.1</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.5.1" />
+        <PackageReference Include="Proto.Actor" Version="0.2.0" />
+        <PackageReference Include="Proto.Persistence" Version="0.2.0" />
+        <PackageReference Include="Proto.Mailbox" Version="0.2.0" />
+        <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+        <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0.23" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Proto.Persistence.EventStore\Proto.Persistence.EventStore.csproj" />
+    </ItemGroup>
+</Project>
