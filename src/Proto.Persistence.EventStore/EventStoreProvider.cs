@@ -11,12 +11,17 @@ namespace Proto.Persistence.EventStore
         private readonly IEventStoreConnection _connection;
         private readonly StreamNameStrategy _eventStreamNameStrategy;
         private readonly StreamNameStrategy _snapshotStreamNameStrategy;
+        private Func<string, Type> _stringToType;
+        private Func<Type, string> _typeToString;
 
         public EventStoreProvider(IEventStoreConnection connection)
         {
             _connection = connection;
             _eventStreamNameStrategy = DefaultStrategy.DefaultEventStreamNameStrategy;
             _snapshotStreamNameStrategy = DefaultStrategy.DefaultSnapshotStreamNameStrategy;
+
+            _stringToType = Type.GetType;
+            _typeToString = type => type.AssemblyQualifiedName;
         }
 
         public EventStoreProvider(IEventStoreConnection connection,
@@ -26,6 +31,13 @@ namespace Proto.Persistence.EventStore
             _connection = connection;
             _eventStreamNameStrategy = eventStreamNameStrategy;
             _snapshotStreamNameStrategy = snapshotStreamNameStrategy;
+        }
+
+        public EventStoreProvider WithTypeResolver(Func<Type, string> typeToString, Func<string, Type> stringToType)
+        {
+            _stringToType = stringToType;
+            _typeToString = typeToString;
+            return this;
         }
 
         public async Task<long> GetEventsAsync(string actorName, long indexStart, long indexEnd,
@@ -39,7 +51,7 @@ namespace Proto.Persistence.EventStore
                 count++;
             }
 
-            var slice = await _connection.ReadEvents(_eventStreamNameStrategy(actorName), start, count);
+            var slice = await _connection.ReadEvents(_eventStreamNameStrategy(actorName), start, count, _stringToType);
 
             var events = slice.Events.ToList();
             if (start != indexStart && events.Count > 0)
@@ -55,16 +67,17 @@ namespace Proto.Persistence.EventStore
 
         public async Task<(object Snapshot, long Index)> GetSnapshotAsync(string actorName)
         {
-            var @event = await _connection.ReadLastEvent(_snapshotStreamNameStrategy(actorName));
+            var @event = await _connection.ReadLastEvent(_snapshotStreamNameStrategy(actorName), _stringToType);
 
             return (@event.Event, @event.Version);
         }
 
         public Task<long> PersistEventAsync(string actorName, long index, object @event)
-            => _connection.SaveEvent(_eventStreamNameStrategy(actorName), @event, index, index - 1);
+            => _connection.SaveEvent(_eventStreamNameStrategy(actorName), @event, index, index - 1, _typeToString);
 
         public Task PersistSnapshotAsync(string actorName, long index, object snapshot)
-            => _connection.SaveEvent(_snapshotStreamNameStrategy(actorName), snapshot, index, ExpectedVersion.Any);
+            => _connection.SaveEvent(_snapshotStreamNameStrategy(actorName), snapshot, index,
+                ExpectedVersion.Any, _typeToString);
 
         public Task DeleteEventsAsync(string actorName, long inclusiveToIndex)
         {

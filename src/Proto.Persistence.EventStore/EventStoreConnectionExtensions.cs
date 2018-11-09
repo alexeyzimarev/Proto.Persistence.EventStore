@@ -15,7 +15,8 @@ namespace Proto.Persistence.EventStore
         private static readonly ILogger Log = Proto.Log.CreateLogger<EventStoreProvider>();
 
         public static async Task<long> SaveEvent(this IEventStoreConnection connection,
-            string streamName, object @event, long index, long expectedVersion)
+            string streamName, object @event, long index, long expectedVersion,
+            Func<Type, string> typeToString)
         {
             var esEvents = new[]
             {
@@ -25,7 +26,7 @@ namespace Proto.Persistence.EventStore
                     true,
                     JsonSerialization.Serialise(@event),
                     JsonSerialization.Serialise(
-                        new EventMetadata {CrlTypeName = @event.GetType().FullName, Index = index}))
+                        new EventMetadata {CrlTypeName = typeToString(@event.GetType()), Index = index}))
             };
 
             WriteResult result;
@@ -46,10 +47,11 @@ namespace Proto.Persistence.EventStore
 
         public static async Task<(IEnumerable<object> Events, long Version)> ReadEvents(
             this IEventStoreConnection connection,
-            string streamName, long start, long count)
+            string streamName, long start, long count,
+            Func<string, Type> stringToType)
         {
             var events = new List<object>();
-            ResolvedEvent lastEvent;
+            long lastIndex;
             try
             {
                 long nextPageStart;
@@ -69,8 +71,9 @@ namespace Proto.Persistence.EventStore
                     runningCount += slice.Events.Length;
                     nextPageStart = !slice.IsEndOfStream ? slice.NextEventNumber : -1;
 
-                    events.AddRange(slice.Events.Select(Deserialize));
-                    lastEvent = slice.Events.Last();
+                    var sliceEvents = slice.Events.Select(x => Deserialize(x, stringToType)).ToList();
+                    events.AddRange(sliceEvents.Select(x => x.@event));
+                    lastIndex = sliceEvents.Last().index;
                 } while (nextPageStart != -1 && runningCount < count);
             }
             catch (Exception e)
@@ -79,13 +82,11 @@ namespace Proto.Persistence.EventStore
                 throw;
             }
 
-            var metadata = JsonSerialization.Deserialize<EventMetadata>(lastEvent.Event.Metadata);
-
-            return (events, metadata.Index);
+            return (events, lastIndex);
         }
 
         public static async Task<(object Event, long Version)> ReadLastEvent(this IEventStoreConnection connection,
-            string streamName)
+            string streamName, Func<string, Type> stringToType)
         {
             try
             {
@@ -98,9 +99,8 @@ namespace Proto.Persistence.EventStore
 
                 if (!slice.Events.Any()) return (null, 0);
 
-                var @event = Deserialize(slice.Events.First());
-                var meta = JsonSerialization.Deserialize<EventMetadata>(slice.Events.First().Event.Metadata);
-                return (@event, meta.Index);
+                var @event = Deserialize(slice.Events.First(), stringToType);
+                return (@event.@event, @event.index);
 
             }
             catch (Exception e)
@@ -110,11 +110,11 @@ namespace Proto.Persistence.EventStore
             }
         }
 
-        private static object Deserialize(ResolvedEvent @event)
+        private static (object @event, long index) Deserialize(ResolvedEvent @event, Func<string, Type> stringToType)
         {
             var meta = JsonSerialization.Deserialize<EventMetadata>(@event.Event.Metadata);
-            var type = Type.GetType(meta.CrlTypeName);
-            return JsonSerialization.Deserialize(@event.Event.Data, type);
+            var type = stringToType(meta.CrlTypeName);
+            return (JsonSerialization.Deserialize(@event.Event.Data, type), meta.Index);
         }
 
         internal class EventMetadata
