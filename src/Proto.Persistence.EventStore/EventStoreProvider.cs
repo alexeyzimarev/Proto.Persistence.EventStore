@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
 
@@ -25,18 +27,30 @@ namespace Proto.Persistence.EventStore
             _eventStreamNameStrategy = eventStreamNameStrategy;
             _snapshotStreamNameStrategy = snapshotStreamNameStrategy;
         }
-        
-        public async Task<long> GetEventsAsync(string actorName, long indexStart, long indexEnd, Action<object> callback)
-        {
-            var count = indexEnd == long.MaxValue ? indexEnd : indexEnd - indexStart + 1;
-            var events = await _connection.ReadEvents(_eventStreamNameStrategy(actorName), indexStart, count);
 
-            foreach (var @event in events.Events)
+        public async Task<long> GetEventsAsync(string actorName, long indexStart, long indexEnd,
+            Action<object> callback)
+        {
+            var count = indexEnd == long.MaxValue ? indexEnd - 1 : indexEnd - indexStart + 1;
+            var start = indexStart;
+            if (indexStart > 0)
+            {
+                start = indexStart - 1;
+                count++;
+            }
+
+            var slice = await _connection.ReadEvents(_eventStreamNameStrategy(actorName), start, count);
+
+            var events = slice.Events.ToList();
+            if (start != indexStart && events.Count > 0)
+                events.RemoveAt(0);
+
+            foreach (var @event in events)
             {
                 callback(@event);
             }
 
-            return events.Version;
+            return slice.Version;
         }
 
         public async Task<(object Snapshot, long Index)> GetSnapshotAsync(string actorName)

@@ -4,15 +4,18 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
+using Microsoft.Extensions.Logging;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Proto.Persistence.EventStore
 {
     public static class EventStoreConnectionExtensions
     {
         private const int MaxReadSize = 4096;
+        private static readonly ILogger Log = Proto.Log.CreateLogger<EventStoreProvider>();
 
         public static async Task<long> SaveEvent(this IEventStoreConnection connection,
-            string streamIdentifier, object @event, long index, long expectedVersion)
+            string streamName, object @event, long index, long expectedVersion)
         {
             var esEvents = new[]
             {
@@ -29,12 +32,12 @@ namespace Proto.Persistence.EventStore
             try
             {
                 result = await connection
-                    .AppendToStreamAsync(streamIdentifier, expectedVersion, esEvents)
+                    .AppendToStreamAsync(streamName, expectedVersion, esEvents)
                     .ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.LogError(e, "Cannot save events to stream {stream}: {message}", streamName, e.Message);
                 throw;
             }
 
@@ -72,7 +75,7 @@ namespace Proto.Persistence.EventStore
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.LogError(e, "Cannot read events from stream {stream}: {message}", streamName, e.Message);
                 throw;
             }
 
@@ -102,7 +105,7 @@ namespace Proto.Persistence.EventStore
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.LogError(e, "Cannot read last event from stream {stream}: {message}", streamName, e.Message);
                 throw;
             }
         }
