@@ -33,7 +33,7 @@ namespace Proto.Persistence.EventStore
             try
             {
                 result = await connection
-                    .AppendToStreamAsync(streamName, expectedVersion, esEvents)
+                    .AppendToStreamAsync(streamName, ExpectedVersion.Any, esEvents)
                     .ConfigureAwait(false);
             }
             catch (Exception e)

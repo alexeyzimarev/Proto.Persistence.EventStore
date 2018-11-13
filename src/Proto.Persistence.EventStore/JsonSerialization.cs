@@ -10,9 +10,12 @@ namespace Proto.Persistence.EventStore
     {
         public static readonly JsonSerializerSettings DefaultSettings = new JsonSerializerSettings
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-            TypeNameHandling = TypeNameHandling.None,
-            NullValueHandling = NullValueHandling.Ignore
+            ContractResolver     = new CamelCasePropertyNamesContractResolver(),
+            DefaultValueHandling = DefaultValueHandling.Include,
+            TypeNameHandling     = TypeNameHandling.None,
+            NullValueHandling    = NullValueHandling.Ignore,
+            Formatting           = Formatting.None,
+            ConstructorHandling  = ConstructorHandling.AllowNonPublicDefaultConstructor
         };
 
         public static T Deserialize<T>(byte[] data) =>
