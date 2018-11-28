@@ -51,7 +51,7 @@ namespace Proto.Persistence.EventStore
             Func<string, Type> stringToType)
         {
             var events = new List<object>();
-            long lastIndex;
+            long lastIndex = 0;
             try
             {
                 long nextPageStart;
@@ -73,7 +73,7 @@ namespace Proto.Persistence.EventStore
 
                     var sliceEvents = slice.Events.Select(x => Deserialize(x, stringToType)).ToList();
                     events.AddRange(sliceEvents.Select(x => x.@event));
-                    lastIndex = sliceEvents.Last().index;
+                    lastIndex = sliceEvents.Any() ? sliceEvents.Last().index : lastIndex;
                 } while (nextPageStart != -1 && runningCount < count);
             }
             catch (Exception e)
