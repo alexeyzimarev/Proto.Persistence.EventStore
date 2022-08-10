@@ -8,7 +8,6 @@
         <IsPackable>true</IsPackable>
         <Authors>Alexey Zimarev</Authors>
         <Description>EventStoreDB persistence for ProtoActor</Description>
-        <PackageLicenseUrl>https://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
         <PackageProjectUrl>https://proto.actor/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/alexeyzimarev/proto.persistence.eventstore.git</RepositoryUrl>
         <PackageTags>actors actor model concurrency proto protoactor eventstore</PackageTags>
