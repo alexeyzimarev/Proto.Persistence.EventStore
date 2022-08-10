@@ -17,6 +17,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="MinVer" Version="4.1.0" PrivateAssets="All"/>
