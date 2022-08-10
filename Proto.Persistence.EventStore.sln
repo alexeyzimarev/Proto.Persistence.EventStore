@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.0.0
+MinimumVisualStudioVersion = 10.0.0.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto.Persistence.EventStore", "src\Proto.Persistence.EventStore\Proto.Persistence.EventStore.csproj", "{C444CB7F-2FC7-403B-AF44-17C86B51B9E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto.Persistence.EventStore.Sample", "sample\Proto.Persistence.EventStore.Sample\Proto.Persistence.EventStore.Sample.csproj", "{3832CF50-B2C8-4D6E-A7F8-032C09DD588E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C444CB7F-2FC7-403B-AF44-17C86B51B9E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C444CB7F-2FC7-403B-AF44-17C86B51B9E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C444CB7F-2FC7-403B-AF44-17C86B51B9E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C444CB7F-2FC7-403B-AF44-17C86B51B9E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3832CF50-B2C8-4D6E-A7F8-032C09DD588E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3832CF50-B2C8-4D6E-A7F8-032C09DD588E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3832CF50-B2C8-4D6E-A7F8-032C09DD588E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3832CF50-B2C8-4D6E-A7F8-032C09DD588E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

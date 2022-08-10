@@ -1,20 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.2.4</Version>
-    <Authors>Alexey Zimarev</Authors>
-    <Company>
-    </Company>
-    <Description>EventStore persistence for ProtoActor</Description>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
-    <PackageProjectUrl>http://proto.actor/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/alexeyzimarev/proto.persistence.eventstore</RepositoryUrl>
-    <PackageTags>actors actor model concurrency proto protoactor eventstore</PackageTags>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Proto.Actor" Version="0.2.0" />
-    <PackageReference Include="Proto.Persistence" Version="0.2.0" />
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0.23" />
-  </ItemGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>true</IsPackable>
+        <Authors>Alexey Zimarev</Authors>
+        <Description>EventStoreDB persistence for ProtoActor</Description>
+        <PackageLicenseUrl>https://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+        <PackageProjectUrl>https://proto.actor/</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/alexeyzimarev/proto.persistence.eventstore.git</RepositoryUrl>
+        <PackageTags>actors actor model concurrency proto protoactor eventstore</PackageTags>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <UpdateVersionProperties>true</UpdateVersionProperties>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="MinVer" Version="4.1.0" PrivateAssets="All"/>
+        <PackageReference Include="System.Text.Json" Version="[6.0.0,)" Condition="'$(TargetFramework)' == 'netcoreapp3.1'"/>
+        <PackageReference Include="EventStore.Client.Grpc.Streams" Version="22.0.0"/>
+        <PackageReference Include="Proto.Actor" Version="0.33.0"/>
+        <PackageReference Include="Proto.Persistence" Version="0.33.0"/>
+    </ItemGroup>
 </Project>
